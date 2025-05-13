@@ -40,7 +40,7 @@ using namespace OnnxPlugin;
 using namespace OpenMM;
 using namespace std;
 
-OnnxForce::OnnxForce(const string& file, const map<string, string>& properties) {
+OnnxForce::OnnxForce(const string& file, const map<string, string>& properties) : provider(Default) {
     ifstream input(file, ios::in | ios::binary);
     if (!input.good())
         throw OpenMMException("Failed to read file "+file);
@@ -48,7 +48,7 @@ OnnxForce::OnnxForce(const string& file, const map<string, string>& properties) 
     initProperties(properties);
 }
 
-OnnxForce::OnnxForce(const std::vector<uint8_t>& model, const map<string, string>& properties) : model(model) {
+OnnxForce::OnnxForce(const std::vector<uint8_t>& model, const map<string, string>& properties) : model(model), provider(Default)  {
     initProperties(properties);
 }
 
@@ -64,6 +64,14 @@ void OnnxForce::initProperties(const std::map<std::string, std::string>& propert
 
 const std::vector<uint8_t>& OnnxForce::getModel() const {
     return model;
+}
+
+OnnxForce::ExecutionProvider OnnxForce::getExecutionProvider() const {
+    return provider;
+}
+
+void OnnxForce::setExecutionProvider(OnnxForce::ExecutionProvider provider) {
+    this->provider = provider;
 }
 
 bool OnnxForce::usesPeriodicBoundaryConditions() const {

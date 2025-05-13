@@ -47,6 +47,35 @@ namespace OnnxPlugin {
 class OPENMM_EXPORT_ONNX OnnxForce : public OpenMM::Force {
 public:
     /**
+     * This is an enumeration of ONNX execution providers.
+     */
+    enum ExecutionProvider {
+        /**
+         * Select an execution provider automatically, based on which ones are available.
+         * Usually this will select the fastest available provider.
+         */
+        Default = 0,
+        /**
+         * Compute the model on the CPU.  This is the only provider that is guaranteed to
+         * always be available.
+         */
+        CPU = 1,
+        /**
+         * Use the CUDA execution provider.  This is only available on NVIDIA GPUs.
+         */
+        CUDA = 2,
+        /**
+         * Use the TensorRT execution provider.  This is only available on NVIDIA GPUs,
+         * and requires TensorRT to be installed.
+         */
+        TensorRT = 3,
+        /**
+         * Use the ROCm execution provider.  This is most often used for AMD GPUs, but
+         * may sometimes be available for other hardware as well.
+         */
+        ROCm = 4,
+    };
+    /**
      * Create an OnnxForce by loading the ONNX model from a file.
      *
      * @param file       the path to the file containing the model
@@ -64,6 +93,14 @@ public:
      * Get the binary representation of the model in ONNX format.
      */
     const std::vector<uint8_t>& getModel() const;
+    /**
+     * Get the execution provider to be used for computing the model.
+     */
+    ExecutionProvider getExecutionProvider() const;
+    /**
+     * Set the execution provider to be used for computing the model.
+     */
+    void setExecutionProvider(ExecutionProvider provider);
     /**
      * Get whether this force uses periodic boundary conditions.
      */
@@ -132,6 +169,7 @@ private:
     class GlobalParameterInfo;
     void initProperties(const std::map<std::string, std::string>& properties);
     std::vector<uint8_t> model;
+    ExecutionProvider provider;
     bool periodic;
     std::vector<GlobalParameterInfo> globalParameters;
     std::map<std::string, std::string> properties;

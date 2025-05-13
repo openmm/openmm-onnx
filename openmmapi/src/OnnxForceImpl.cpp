@@ -46,8 +46,57 @@ OnnxForceImpl::~OnnxForceImpl() {
 
 void OnnxForceImpl::initialize(ContextImpl& context) {
     CustomCPPForceImpl::initialize(context);
+
+    // Select the execution provider and set options.
+
+    OnnxForce::ExecutionProvider provider = owner.getExecutionProvider();
+    string deviceIndex = owner.getProperties().at("DeviceIndex");
+    string enableGraph;
+    if (owner.getProperties().at("UseCUDAGraphs") == "true")
+        enableGraph = "1";
+    else if (owner.getProperties().at("UseCUDAGraphs") == "false")
+        enableGraph = "0";
+    else
+        throw OpenMMException("Illegal value for UseCUDAGraphs: "+owner.getProperties().at("UseCUDAGraphs"));
+    SessionOptions options;
+    if (provider == OnnxForce::TensorRT || provider == OnnxForce::Default) {
+        OrtTensorRTProviderOptionsV2* rtOptions = nullptr;
+        if (GetApi().CreateTensorRTProviderOptions(&rtOptions) == nullptr) {
+            vector<const char*> keys{"device_id", "trt_cuda_graph_enable"};
+            vector<const char*> values{deviceIndex.c_str(), enableGraph.c_str()};
+            ThrowOnError(GetApi().UpdateTensorRTProviderOptions(rtOptions, keys.data(), values.data(), 2));
+            options.AppendExecutionProvider_TensorRT_V2(*rtOptions);
+        }
+        else if (provider == OnnxForce::TensorRT)
+            throw OpenMMException("TensorRT execution provider is not available");
+    }
+    if (provider == OnnxForce::CUDA || provider == OnnxForce::Default) {
+        OrtCUDAProviderOptionsV2* cudaOptions = nullptr;
+        if (GetApi().CreateCUDAProviderOptions(&cudaOptions) == nullptr) {
+            vector<const char*> keys{"device_id", "use_tf32", "enable_cuda_graph"};
+            vector<const char*> values{deviceIndex.c_str(), "0", enableGraph.c_str()};
+            ThrowOnError(GetApi().UpdateCUDAProviderOptions(cudaOptions, keys.data(), values.data(), 3));
+            options.AppendExecutionProvider_CUDA_V2(*cudaOptions);
+        }
+        else if (provider == OnnxForce::CUDA)
+            throw OpenMMException("CUDA execution provider is not available");
+    }
+    if (provider == OnnxForce::ROCm || provider == OnnxForce::Default) {
+        OrtROCMProviderOptions* rocmOptions = nullptr;
+        if (GetApi().CreateROCMProviderOptions(&rocmOptions) == nullptr) {
+            vector<const char*> keys{"device_id"};
+            vector<const char*> values{deviceIndex.c_str()};
+            ThrowOnError(GetApi().UpdateROCMProviderOptions(rocmOptions, keys.data(), values.data(), 1));
+            options.AppendExecutionProvider_ROCM(*rocmOptions);
+        }
+        else if (provider == OnnxForce::ROCm)
+            throw OpenMMException("ROCm execution provider is not available");
+    }
+
+    // Create the session and initialize data structures.
+
     const vector<uint8_t>& model = owner.getModel();
-    session = Session(env, model.data(), model.size(), SessionOptions{ nullptr });
+    session = Session(env, model.data(), model.size(), options);
     int numParticles = context.getSystem().getNumParticles();
     positionVec.resize(3*numParticles);
     paramVec.resize(owner.getNumGlobalParameters());
