@@ -35,6 +35,7 @@
 #include "openmm/Context.h"
 #include "openmm/Force.h"
 #include "internal/windowsExportOnnx.h"
+#include <map>
 #include <vector>
 
 namespace OnnxPlugin {
@@ -49,14 +50,16 @@ public:
      * Create an OnnxForce by loading the ONNX model from a file.
      *
      * @param file       the path to the file containing the model
+     * @param properties optional map of properties
      */
-    OnnxForce(const std::string& file);
+    OnnxForce(const std::string& file, const std::map<std::string, std::string>& properties={});
     /**
      * Create an OnnxForce by loading the ONNX model from a vector.
      *
      * @param model      the binary representation of the model in ONNX format
+     * @param properties optional map of properties
      */
-    OnnxForce(const std::vector<uint8_t>& model);
+    OnnxForce(const std::vector<uint8_t>& model, const std::map<std::string, std::string>& properties={});
     /**
      * Get the binary representation of the model in ONNX format.
      */
@@ -111,13 +114,27 @@ public:
      * @param defaultValue   the default value of the parameter
      */
     void setGlobalParameterDefaultValue(int index, double defaultValue);
+    /**
+     * Set the value of a property.
+     *
+     * @param name           the name of the property
+     * @param value          the value of the property
+     */
+    void setProperty(const std::string& name, const std::string& value);
+    /**
+     * Get the map of properties for this instance.
+     * @return A map of property names to values.
+     */
+    const std::map<std::string, std::string>& getProperties() const;
 protected:
     OpenMM::ForceImpl* createImpl() const;
 private:
     class GlobalParameterInfo;
+    void initProperties(const std::map<std::string, std::string>& properties);
     std::vector<uint8_t> model;
     bool periodic;
     std::vector<GlobalParameterInfo> globalParameters;
+    std::map<std::string, std::string> properties;
 };
 
 /**

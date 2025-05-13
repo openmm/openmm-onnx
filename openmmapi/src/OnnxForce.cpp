@@ -40,14 +40,26 @@ using namespace OnnxPlugin;
 using namespace OpenMM;
 using namespace std;
 
-OnnxForce::OnnxForce(const string& file) {
+OnnxForce::OnnxForce(const string& file, const map<string, string>& properties) {
     ifstream input(file, ios::in | ios::binary);
     if (!input.good())
         throw OpenMMException("Failed to read file "+file);
     model = vector<uint8_t>((istreambuf_iterator<char>(input)), istreambuf_iterator<char>());
+    initProperties(properties);
 }
 
-OnnxForce::OnnxForce(const std::vector<uint8_t>& model) : model(model) {
+OnnxForce::OnnxForce(const std::vector<uint8_t>& model, const map<string, string>& properties) : model(model) {
+    initProperties(properties);
+}
+
+void OnnxForce::initProperties(const std::map<std::string, std::string>& properties) {
+    const std::map<std::string, std::string> defaultProperties = {{"UseCUDAGraphs", "false"}, {"DeviceIndex", "0"}};
+    this->properties = defaultProperties;
+    for (auto& property : properties) {
+        if (defaultProperties.find(property.first) == defaultProperties.end())
+            throw OpenMMException("OnnxForce: Unknown property '" + property.first + "'");
+        this->properties[property.first] = property.second;
+    }
 }
 
 const std::vector<uint8_t>& OnnxForce::getModel() const {
@@ -93,4 +105,14 @@ double OnnxForce::getGlobalParameterDefaultValue(int index) const {
 void OnnxForce::setGlobalParameterDefaultValue(int index, double defaultValue) {
     ASSERT_VALID_INDEX(index, globalParameters);
     globalParameters[index].defaultValue = defaultValue;
+}
+
+void OnnxForce::setProperty(const string& name, const string& value) {
+    if (properties.find(name) == properties.end())
+        throw OpenMMException("OnnxForce: Unknown property '" + name + "'");
+    properties[name] = value;
+}
+
+const map<string, string>& OnnxForce::getProperties() const {
+    return properties;
 }

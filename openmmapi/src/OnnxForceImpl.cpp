@@ -48,7 +48,6 @@ void OnnxForceImpl::initialize(ContextImpl& context) {
     CustomCPPForceImpl::initialize(context);
     const vector<uint8_t>& model = owner.getModel();
     session = Session(env, model.data(), model.size(), SessionOptions{ nullptr });
-//    session = Session(env, owner.getFile().c_str(), SessionOptions{ nullptr });
     int numParticles = context.getSystem().getNumParticles();
     positionVec.resize(3*numParticles);
     paramVec.resize(owner.getNumGlobalParameters());
