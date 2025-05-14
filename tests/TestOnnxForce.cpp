@@ -164,9 +164,9 @@ void testGlobal(Platform& platform) {
 }
 
 void testPlatform(Platform& platform) {
-        testForce(platform);
-        testPeriodicForce(platform);
-        testGlobal(platform);
+    testForce(platform);
+    testPeriodicForce(platform);
+    testGlobal(platform);
 }
 
 int main(int argc, char* argv[]) {

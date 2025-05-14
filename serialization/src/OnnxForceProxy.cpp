@@ -33,6 +33,7 @@
 #include "OnnxForce.h"
 #include "openmm/serialization/SerializationNode.h"
 #include <fstream>
+#include <iomanip>
 #include <sstream>
 
 using namespace OnnxPlugin;

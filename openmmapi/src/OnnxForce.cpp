@@ -40,7 +40,7 @@ using namespace OnnxPlugin;
 using namespace OpenMM;
 using namespace std;
 
-OnnxForce::OnnxForce(const string& file, const map<string, string>& properties) : provider(Default) {
+OnnxForce::OnnxForce(const string& file, const map<string, string>& properties) : provider(Default), periodic(false) {
     ifstream input(file, ios::in | ios::binary);
     if (!input.good())
         throw OpenMMException("Failed to read file "+file);
@@ -48,7 +48,7 @@ OnnxForce::OnnxForce(const string& file, const map<string, string>& properties) 
     initProperties(properties);
 }
 
-OnnxForce::OnnxForce(const std::vector<uint8_t>& model, const map<string, string>& properties) : model(model), provider(Default)  {
+OnnxForce::OnnxForce(const std::vector<uint8_t>& model, const map<string, string>& properties) : model(model), provider(Default), periodic(false)  {
     initProperties(properties);
 }
 
