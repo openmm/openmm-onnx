@@ -190,6 +190,6 @@ force.setProperty("DeviceIndex", "1")
 The following properties are currently supported.
 
 - `"DeviceIndex"`: the index of the GPU to use.  This affects the CUDA, ROCm, and TensorRT providers.
-- `"UseGraphs"`: whether to use CUDA/HIP graphs to optimize the calculation.  This can improve
-  performance in some cases, but may not be compatible with all models.  It affects the CUDA, ROCm, and
-  TensorRT providers
+- `"UseGraphs"`: set to `"true"` or `"false"` to specify whether to use CUDA/HIP graphs to optimize
+  the calculation.  This can improve performance in some cases, but may not be compatible with all
+  models.  It affects the CUDA, ROCm, and TensorRT providers
