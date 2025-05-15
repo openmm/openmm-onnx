@@ -48,7 +48,7 @@ void testSerialization() {
     force.addGlobalParameter("x", 1.3);
     force.addGlobalParameter("y", 2.221);
     force.setUsesPeriodicBoundaryConditions(true);
-    force.setProperty("UseCUDAGraphs", "true");
+    force.setProperty("UseGraphs", "true");
 
     // Serialize and then deserialize it.
 

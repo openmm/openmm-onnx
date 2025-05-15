@@ -52,12 +52,12 @@ void OnnxForceImpl::initialize(ContextImpl& context) {
     OnnxForce::ExecutionProvider provider = owner.getExecutionProvider();
     string deviceIndex = owner.getProperties().at("DeviceIndex");
     string enableGraph;
-    if (owner.getProperties().at("UseCUDAGraphs") == "true")
+    if (owner.getProperties().at("UseGraphs") == "true")
         enableGraph = "1";
-    else if (owner.getProperties().at("UseCUDAGraphs") == "false")
+    else if (owner.getProperties().at("UseGraphs") == "false")
         enableGraph = "0";
     else
-        throw OpenMMException("Illegal value for UseCUDAGraphs: "+owner.getProperties().at("UseCUDAGraphs"));
+        throw OpenMMException("Illegal value for UseGraphs: "+owner.getProperties().at("UseGraphs"));
     SessionOptions options;
     if (provider == OnnxForce::TensorRT || provider == OnnxForce::Default) {
         OrtTensorRTProviderOptionsV2* rtOptions = nullptr;
@@ -84,9 +84,9 @@ void OnnxForceImpl::initialize(ContextImpl& context) {
     if (provider == OnnxForce::ROCm || provider == OnnxForce::Default) {
         OrtROCMProviderOptions* rocmOptions = nullptr;
         if (GetApi().CreateROCMProviderOptions(&rocmOptions) == nullptr) {
-            vector<const char*> keys{"device_id"};
-            vector<const char*> values{deviceIndex.c_str()};
-            ThrowOnError(GetApi().UpdateROCMProviderOptions(rocmOptions, keys.data(), values.data(), 1));
+            vector<const char*> keys{"device_id", "enable_hip_graph"};
+            vector<const char*> values{deviceIndex.c_str(), enableGraph.c_str()};
+            ThrowOnError(GetApi().UpdateROCMProviderOptions(rocmOptions, keys.data(), values.data(), 2));
             options.AppendExecutionProvider_ROCM(*rocmOptions);
         }
         else if (provider == OnnxForce::ROCm)

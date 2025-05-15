@@ -53,7 +53,7 @@ OnnxForce::OnnxForce(const std::vector<uint8_t>& model, const map<string, string
 }
 
 void OnnxForce::initProperties(const std::map<std::string, std::string>& properties) {
-    const std::map<std::string, std::string> defaultProperties = {{"UseCUDAGraphs", "false"}, {"DeviceIndex", "0"}};
+    const std::map<std::string, std::string> defaultProperties = {{"UseGraphs", "false"}, {"DeviceIndex", "0"}};
     this->properties = defaultProperties;
     for (auto& property : properties) {
         if (defaultProperties.find(property.first) == defaultProperties.end())

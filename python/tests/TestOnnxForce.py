@@ -25,8 +25,8 @@ def testForce(use_cv_force, platform):
         system.addParticle(1.0)
 
     # Create a force
-    force = openmmonnx.OnnxForce('../../tests/central.onnx', {'UseCUDAGraphs': 'false'})
-    assert force.getProperties()['UseCUDAGraphs'] == 'false'
+    force = openmmonnx.OnnxForce('../../tests/central.onnx', {'UseGraphs': 'false'})
+    assert force.getProperties()['UseGraphs'] == 'false'
     if use_cv_force:
         # Wrap OnnxForce into CustomCVForce
         cv_force = mm.CustomCVForce('force')
@@ -52,10 +52,10 @@ def testForce(use_cv_force, platform):
 def testProperties():
     """ Test that the properties are correctly set and retrieved """
     force = openmmonnx.OnnxForce('../../tests/central.onnx')
-    force.setProperty('UseCUDAGraphs', 'true')
-    assert force.getProperties()['UseCUDAGraphs'] == 'true'
-    force.setProperty('UseCUDAGraphs', 'false')
-    assert force.getProperties()['UseCUDAGraphs'] == 'false'
+    force.setProperty('UseGraphs', 'true')
+    assert force.getProperties()['UseGraphs'] == 'true'
+    force.setProperty('UseGraphs', 'false')
+    assert force.getProperties()['UseGraphs'] == 'false'
 
 def testSerialization():
     force1 = openmmonnx.OnnxForce('../../tests/central.onnx')
