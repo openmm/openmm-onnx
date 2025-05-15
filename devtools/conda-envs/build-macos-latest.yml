@@ -1,0 +1,17 @@
+name: build
+channels:
+- conda-forge
+dependencies:
+# build
+- cmake
+- make
+- compilers
+# host
+- python
+- pip
+- swig
+- openmm
+- onnxruntime
+- onnxruntime-cpp
+# test
+- pytest
