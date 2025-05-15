@@ -13,5 +13,7 @@ dependencies:
 - openmm
 - onnxruntime
 - onnxruntime-cpp
+- khronos-opencl-icd-loader
+- pocl
 # test
 - pytest
