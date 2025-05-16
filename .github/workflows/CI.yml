@@ -184,7 +184,7 @@ jobs:
           cd build
           pip install mingw_ldd
           python -m site
-          mingw_ldd tests/TestOnnxForce.exe
+          python C:\Users\runneradmin\miniconda3\envs\build\Lib\site-packages\mingw_ldd\mingw_ldd.py tests/TestOnnxForce.exe
           ctest --output-on-failure
 
       - name: "Test Python"
