@@ -162,7 +162,8 @@ jobs:
           cmake .. -G "NMake Makefiles JOM" ^
             -DCMAKE_INSTALL_PREFIX=%CONDA_PREFIX%/Library ^
             -DCMAKE_BUILD_TYPE=Release ^
-            -DOPENMM_DIR=%CONDA_PREFIX%/Library
+            -DOPENMM_DIR=%CONDA_PREFIX%/Library ^
+            -DONNX_LIBRARY_PATH="C:\Users\runneradmin\miniconda3\envs\build\Library\lib\onnxruntime_conda.lib"
 
       - name: "Build"
         shell: cmd /C call {0}
