@@ -183,8 +183,8 @@ jobs:
         run: |
           cd build
           pip install mingw_ldd
-          dir "C:\Users\runneradmin\miniconda3\envs\build\Library\lib"
-          python C:\Users\runneradmin\miniconda3\envs\build\Lib\site-packages\mingw_ldd\mingw_ldd.py tests/TestOnnxForce.exe --dll-lookup-dirs "C:\Users\runneradmin\miniconda3\envs\build\Library\lib"
+          dir "C:\Users\runneradmin\miniconda3\envs\build\Lib\site-packages\onnxruntime\capi"
+          python C:\Users\runneradmin\miniconda3\envs\build\Lib\site-packages\mingw_ldd\mingw_ldd.py tests/TestOnnxForce.exe --dll-lookup-dirs "C:\Users\runneradmin\miniconda3\envs\build\Library\lib" "C:\Users\runneradmin\miniconda3\envs\build\Lib\site-packages\onnxruntime\capi"
           ctest --output-on-failure
 
       - name: "Test Python"
