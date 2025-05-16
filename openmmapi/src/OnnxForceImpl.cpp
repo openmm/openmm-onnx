@@ -107,18 +107,15 @@ void OnnxForceImpl::initialize(ContextImpl& context) {
     int numInputs = 1+owner.getNumGlobalParameters();
     if (owner.usesPeriodicBoundaryConditions())
         numInputs++;
-    inputTensors.resize(numInputs);
-    inputNames.resize(numInputs);
-    inputTensors[0] = Value::CreateTensor<float>(memoryInfo, positionVec.data(), positionVec.size(), positionsShape, 2);
-    inputNames[0] = "positions";
+    inputTensors.emplace_back(Value::CreateTensor<float>(memoryInfo, positionVec.data(), positionVec.size(), positionsShape, 2));
+    inputNames.push_back("positions");
     if (owner.usesPeriodicBoundaryConditions()) {
-        inputTensors[1] = Value::CreateTensor<float>(memoryInfo, boxVectors, 9, boxShape, 2);
-        inputNames[1] = "box";
+        inputTensors.emplace_back(Value::CreateTensor<float>(memoryInfo, boxVectors, 9, boxShape, 2));
+        inputNames.push_back("box");
     }
-    int paramStart = (owner.usesPeriodicBoundaryConditions() ? 2 : 1);
     for (int i = 0; i < paramVec.size(); i++) {
-        inputTensors[i+paramStart] = Value::CreateTensor<float>(memoryInfo, &paramVec[i], 1, paramShape, 1);
-        inputNames[i+paramStart] = owner.getGlobalParameterName(i).c_str();
+        inputTensors.emplace_back(Value::CreateTensor<float>(memoryInfo, &paramVec[i], 1, paramShape, 1));
+        inputNames.push_back(owner.getGlobalParameterName(i).c_str());
     }
 }
 
@@ -134,19 +131,19 @@ double OnnxForceImpl::computeForce(ContextImpl& context, const vector<Vec3>& pos
 
     int numParticles = context.getSystem().getNumParticles();
     for (int i = 0; i < numParticles; i++) {
-        positionVec[3*i] = positions[i][0];
-        positionVec[3*i+1] = positions[i][1];
-        positionVec[3*i+2] = positions[i][2];
+        positionVec[3*i] = (float) positions[i][0];
+        positionVec[3*i+1] = (float) positions[i][1];
+        positionVec[3*i+2] = (float) positions[i][2];
     }
     if (owner.usesPeriodicBoundaryConditions()) {
         Vec3 box[3];
         context.getPeriodicBoxVectors(box[0], box[1], box[2]);
         for (int i = 0; i < 3; i++)
             for (int j = 0; j < 3; j++)
-                boxVectors[3*i+j] = box[i][j];
+                boxVectors[3*i+j] = (float) box[i][j];
     }
     for (int i = 0; i < owner.getNumGlobalParameters(); i++)
-        paramVec[i] = context.getParameter(owner.getGlobalParameterName(i));
+        paramVec[i] = (float) context.getParameter(owner.getGlobalParameterName(i));
 
     // Perform the computation.
 

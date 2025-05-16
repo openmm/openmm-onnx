@@ -1,0 +1,17 @@
+name: build
+channels:
+- conda-forge
+dependencies:
+# build
+- jom
+- cmake
+- ccache
+- m2-coreutils
+# host
+- python
+- swig
+- openmm
+- onnxruntime
+- onnxruntime-cpp
+# test
+- pytest

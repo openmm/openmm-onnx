@@ -85,7 +85,7 @@ jobs:
       - name: "Plugin information"
         shell: bash -l {0}
         run: |
-          python -c "import simtk.openmm as mm; print('---Loaded---', *mm.pluginLoadedLibNames, '---Failed---', *mm.Platform.getPluginLoadFailures(), sep='\n')"
+          python -c "import openmm as mm; print('---Loaded---', *mm.pluginLoadedLibNames, '---Failed---', *mm.Platform.getPluginLoadFailures(), sep='\n')"
 
       - name: "Test C++"
         shell: bash -l {0}
@@ -121,3 +121,71 @@ jobs:
         run: |
           cd python/tests
           pytest -v Test*
+
+
+  windows:
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows Python 3.12
+            python-version: "3.12"
+            os: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: conda-incubator/setup-miniconda@v3
+        name: "Prepare base dependencies"
+        with:
+          python-version: ${{ matrix.python-version }}
+          activate-environment: build
+          environment-file: devtools/conda-envs/build-${{ matrix.os }}.yml
+          auto-activate-base: false
+          miniforge-variant: Miniforge3
+          use-mamba: true
+
+      - name: "Conda info"
+        shell: cmd /C call {0}
+        run: |
+          conda info -a
+          conda list
+
+      - name: "Configure build with CMake"
+        shell: cmd /C call {0}
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+          mkdir build
+          cd build
+          cmake .. -G "NMake Makefiles JOM" ^
+            -DCMAKE_INSTALL_PREFIX=%CONDA_PREFIX%/Library ^
+            -DCMAKE_BUILD_TYPE=Release ^
+            -DOPENMM_DIR=%CONDA_PREFIX%/Library ^
+            -DONNX_LIBRARY_PATH="C:\Users\runneradmin\miniconda3\envs\build\Library\lib\onnxruntime_conda.lib"
+
+      - name: "Build"
+        shell: cmd /C call {0}
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+          cd build
+          jom -j 4 install
+          jom -j 4 PythonInstall
+
+      - name: "Plugin information"
+        shell: cmd /C call {0}
+        run: |
+          python -c "import openmm as mm; print('---Loaded---', *mm.pluginLoadedLibNames, '---Failed---', *mm.Platform.getPluginLoadFailures(), sep='\n')"
+
+#      - name: "Test C++"
+#        shell: cmd /C call {0}
+#        run: |
+#          cd build
+#          ctest --output-on-failure
+#
+#      - name: "Test Python"
+#        shell: cmd /C call {0}
+#        run: |
+#          cd python/tests
+#          pytest -v TestOnnxForce.py
