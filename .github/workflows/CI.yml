@@ -183,6 +183,7 @@ jobs:
         run: |
           cd build
           pip install mingw_ldd
+          python -m site
           mingw_ldd tests/TestOnnxForce.exe
           ctest --output-on-failure
 
