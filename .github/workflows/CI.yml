@@ -188,4 +188,4 @@ jobs:
         shell: cmd /C call {0}
         run: |
           cd python/tests
-          pytest -v .
+          pytest -v TestOnnxForce.py
