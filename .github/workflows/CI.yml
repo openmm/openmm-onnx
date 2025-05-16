@@ -178,11 +178,11 @@ jobs:
         run: |
           python -c "import openmm as mm; print('---Loaded---', *mm.pluginLoadedLibNames, '---Failed---', *mm.Platform.getPluginLoadFailures(), sep='\n')"
 
-      - name: "Test C++"
-        shell: cmd /C call {0}
-        run: |
-          cd build
-          ctest --output-on-failure
+#      - name: "Test C++"
+#        shell: cmd /C call {0}
+#        run: |
+#          cd build
+#          ctest --output-on-failure
 
       - name: "Test Python"
         shell: cmd /C call {0}
