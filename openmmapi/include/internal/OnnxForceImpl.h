@@ -60,6 +60,7 @@ private:
     Ort::Session session;
     std::vector<Ort::Value> inputTensors, outputTensors;
     std::vector<const char*> inputNames;
+    std::vector<int> particleIndices;
     std::vector<float> positionVec, paramVec;
     float boxVectors[9];
 };

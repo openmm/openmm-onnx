@@ -49,6 +49,7 @@ void testSerialization() {
     force.addGlobalParameter("y", 2.221);
     force.setUsesPeriodicBoundaryConditions(true);
     force.setProperty("UseGraphs", "true");
+    force.setParticleIndices({0, 2, 4});
 
     // Serialize and then deserialize it.
 
@@ -61,6 +62,7 @@ void testSerialization() {
     OnnxForce& force2 = *copy;
     ASSERT_EQUAL_CONTAINERS(force.getModel(), force2.getModel());
     ASSERT_EQUAL(force.getForceGroup(), force2.getForceGroup());
+    ASSERT_EQUAL_CONTAINERS(force.getParticleIndices(), force2.getParticleIndices());
     ASSERT_EQUAL(force.getNumGlobalParameters(), force2.getNumGlobalParameters());
     for (int i = 0; i < force.getNumGlobalParameters(); i++) {
         ASSERT_EQUAL(force.getGlobalParameterName(i), force2.getGlobalParameterName(i));

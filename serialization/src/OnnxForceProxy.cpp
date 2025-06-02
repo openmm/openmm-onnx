@@ -70,6 +70,10 @@ void OnnxForceProxy::serialize(const void* object, SerializationNode& node) cons
     node.setStringProperty("model", hexEncode(force.getModel()));
     node.setIntProperty("forceGroup", force.getForceGroup());
     node.setBoolProperty("usesPeriodic", force.usesPeriodicBoundaryConditions());
+    const vector<int>& indices = force.getParticleIndices();
+    auto& indicesNode = node.createChildNode("ParticleIndices");
+    for (int i = 0; i < indices.size(); i++)
+        indicesNode.createChildNode("Particle").setIntProperty("index", indices[i]);
     SerializationNode& globalParams = node.createChildNode("GlobalParameters");
     for (int i = 0; i < force.getNumGlobalParameters(); i++)
         globalParams.createChildNode("Parameter").setStringProperty("name", force.getGlobalParameterName(i)).setDoubleProperty("default", force.getGlobalParameterDefaultValue(i));
@@ -86,6 +90,12 @@ void* OnnxForceProxy::deserialize(const SerializationNode& node) const {
     force->setForceGroup(node.getIntProperty("forceGroup"));
     force->setUsesPeriodicBoundaryConditions(node.getBoolProperty("usesPeriodic"));
     for (const SerializationNode& child : node.getChildren()) {
+        if (child.getName() == "ParticleIndices") {
+            vector<int> indices;
+            for (auto& particle : child.getChildren())
+                indices.push_back(particle.getIntProperty("index"));
+            force->setParticleIndices(indices);
+        }
         if (child.getName() == "GlobalParameters")
             for (auto& parameter : child.getChildren())
                 force->addGlobalParameter(parameter.getStringProperty("name"), parameter.getDoubleProperty("default"));

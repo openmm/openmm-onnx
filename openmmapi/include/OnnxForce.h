@@ -102,6 +102,16 @@ public:
      */
     void setExecutionProvider(ExecutionProvider provider);
     /**
+     * Get the indices of the particles this force is applied to.  If this is empty, the
+     * force is applied to all particles in the system.
+     */
+    const std::vector<int>& getParticleIndices() const;
+    /**
+     * Set the indices of the particles this force is applied to.  If this is empty, the
+     * force is applied to all particles in the system.
+     */
+    void setParticleIndices(const std::vector<int>& indices);
+    /**
      * Get whether this force uses periodic boundary conditions.
      */
     bool usesPeriodicBoundaryConditions() const;
@@ -169,6 +179,7 @@ private:
     class GlobalParameterInfo;
     void initProperties(const std::map<std::string, std::string>& properties);
     std::vector<uint8_t> model;
+    std::vector<int> particleIndices;
     ExecutionProvider provider;
     bool periodic;
     std::vector<GlobalParameterInfo> globalParameters;

@@ -108,6 +108,20 @@ torch.onnx.export(model=PeriodicForce(),
                   dynamic_axes={"positions":[0], "forces":[0]})
 ```
 
+## Applying to a Subset of Particles
+
+In some cases one wants to model part of a system with a machine learning potential and the rest with a
+conventional force field.  You can restrict which particles the `OnnxForce` acts on by calling `setParticleIndices()`.
+For example, the following applies it only to the first 50 particles in the system.
+
+```python
+particles = list(range(50))
+force.setParticleIndices(particles)
+```
+
+The `positions` tensor passed to the model will contain only the positions of the specified particles.
+Likewise, the `forces` tensor returned by the model should contain only the forces on those particles.
+
 ## Global Parameters
 
 An `OnnxForce` can define global parameters that the model depends on.  The model should have an additional

@@ -15,7 +15,8 @@ def testConstructors():
 
 @pytest.mark.parametrize('use_cv_force', [True, False])
 @pytest.mark.parametrize('platform', [mm.Platform.getPlatform(i).getName() for i in range(mm.Platform.getNumPlatforms())])
-def testForce(use_cv_force, platform):
+@pytest.mark.parametrize('particles', [[], [5,3,0]])
+def testForce(use_cv_force, platform, particles):
 
     # Create a random cloud of particles.
     numParticles = 10
@@ -26,6 +27,7 @@ def testForce(use_cv_force, platform):
 
     # Create a force
     force = openmmonnx.OnnxForce('../../tests/central.onnx', {'UseGraphs': 'false'})
+    force.setParticleIndices(particles)
     assert force.getProperties()['UseGraphs'] == 'false'
     if use_cv_force:
         # Wrap OnnxForce into CustomCVForce
@@ -45,9 +47,14 @@ def testForce(use_cv_force, platform):
     state = context.getState(getEnergy=True, getForces=True)
 
     # See if the energy and forces are correct.  The network defines a potential of the form E(r) = |r|^2
+    if len(particles) > 0:
+        positions = positions[particles]
     expectedEnergy = np.sum(positions*positions)
     assert np.allclose(expectedEnergy, state.getPotentialEnergy().value_in_unit(unit.kilojoules_per_mole))
-    assert np.allclose(-2*positions, state.getForces(asNumpy=True))
+    forces = state.getForces(asNumpy=True)
+    if len(particles) > 0:
+        forces = forces[particles]
+    assert np.allclose(-2*positions, forces)
 
 def testProperties():
     """ Test that the properties are correctly set and retrieved """
