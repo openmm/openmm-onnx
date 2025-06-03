@@ -47,6 +47,15 @@ OnnxForceImpl::~OnnxForceImpl() {
 void OnnxForceImpl::initialize(ContextImpl& context) {
     CustomCPPForceImpl::initialize(context);
 
+    // Record which particles the force is applied to.
+
+    particleIndices = owner.getParticleIndices();
+    if (particleIndices.size() == 0) {
+        int numParticles = context.getSystem().getNumParticles();
+        for (int i = 0; i < numParticles; i++)
+            particleIndices.push_back(i);
+    }
+
     // Select the execution provider and set options.
 
     OnnxForce::ExecutionProvider provider = owner.getExecutionProvider();
@@ -97,11 +106,10 @@ void OnnxForceImpl::initialize(ContextImpl& context) {
 
     const vector<uint8_t>& model = owner.getModel();
     session = Session(env, model.data(), model.size(), options);
-    int numParticles = context.getSystem().getNumParticles();
-    positionVec.resize(3*numParticles);
+    positionVec.resize(3*particleIndices.size());
     paramVec.resize(owner.getNumGlobalParameters());
     auto memoryInfo = MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeCPU);
-    int64_t positionsShape[] = {numParticles, 3};
+    int64_t positionsShape[] = {static_cast<int64_t>(particleIndices.size()), 3};
     int64_t boxShape[] = {3, 3};
     int64_t paramShape[] = {1};
     int numInputs = 1+owner.getNumGlobalParameters();
@@ -129,11 +137,12 @@ map<string, double> OnnxForceImpl::getDefaultParameters() {
 double OnnxForceImpl::computeForce(ContextImpl& context, const vector<Vec3>& positions, vector<Vec3>& forces) {
     // Pass the current state to ONNX Runtime.
 
-    int numParticles = context.getSystem().getNumParticles();
+    int numParticles = particleIndices.size();
     for (int i = 0; i < numParticles; i++) {
-        positionVec[3*i] = (float) positions[i][0];
-        positionVec[3*i+1] = (float) positions[i][1];
-        positionVec[3*i+2] = (float) positions[i][2];
+        int index = particleIndices[i];
+        positionVec[3*i] = (float) positions[index][0];
+        positionVec[3*i+1] = (float) positions[index][1];
+        positionVec[3*i+2] = (float) positions[index][2];
     }
     if (owner.usesPeriodicBoundaryConditions()) {
         Vec3 box[3];
@@ -152,6 +161,6 @@ double OnnxForceImpl::computeForce(ContextImpl& context, const vector<Vec3>& pos
     const float* energy = outputTensors[0].GetTensorData<float>();
     const float* forceData = outputTensors[1].GetTensorData<float>();
     for (int i = 0; i < numParticles; i++)
-        forces[i] = Vec3(forceData[3*i], forceData[3*i+1], forceData[3*i+2]);
+        forces[particleIndices[i]] = Vec3(forceData[3*i], forceData[3*i+1], forceData[3*i+2]);
     return *energy;
 }

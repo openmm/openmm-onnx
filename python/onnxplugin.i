@@ -34,6 +34,7 @@
 
 namespace std {
     %template(vectorbyte) vector<unsigned char>;
+    %template(vectorint) vector<int>;
     %template(property_map) map<std::string, std::string>;
 };
 
@@ -53,6 +54,8 @@ public:
     const std::vector<uint8_t>& getModel() const;
     ExecutionProvider getExecutionProvider() const;
     void setExecutionProvider(ExecutionProvider provider);
+    const std::vector<int>& getParticleIndices() const;
+    void setParticleIndices(const std::vector<int>& indices);
     bool usesPeriodicBoundaryConditions() const;
     void setUsesPeriodicBoundaryConditions(bool periodic);
     int getNumGlobalParameters() const;

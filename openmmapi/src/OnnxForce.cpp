@@ -74,6 +74,14 @@ void OnnxForce::setExecutionProvider(OnnxForce::ExecutionProvider provider) {
     this->provider = provider;
 }
 
+const vector<int>& OnnxForce::getParticleIndices() const {
+    return particleIndices;
+}
+
+void OnnxForce::setParticleIndices(const vector<int>& indices) {
+    particleIndices = indices;
+}
+
 bool OnnxForce::usesPeriodicBoundaryConditions() const {
     return periodic;
 }
