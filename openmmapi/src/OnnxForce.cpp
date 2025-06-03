@@ -52,6 +52,11 @@ OnnxForce::OnnxForce(const std::vector<uint8_t>& model, const map<string, string
     initProperties(properties);
 }
 
+OnnxForce::~OnnxForce() {
+    for (Input* input : inputs)
+        delete input;
+}
+
 void OnnxForce::initProperties(const std::map<std::string, std::string>& properties) {
     const std::map<std::string, std::string> defaultProperties = {{"UseGraphs", "false"}, {"DeviceIndex", "0"}};
     this->properties = defaultProperties;
@@ -121,6 +126,25 @@ double OnnxForce::getGlobalParameterDefaultValue(int index) const {
 void OnnxForce::setGlobalParameterDefaultValue(int index, double defaultValue) {
     ASSERT_VALID_INDEX(index, globalParameters);
     globalParameters[index].defaultValue = defaultValue;
+}
+
+int OnnxForce::getNumInputs() const {
+    return inputs.size();
+}
+
+int OnnxForce::addInput(OnnxForce::Input* input) {
+    inputs.push_back(input);
+    return inputs.size() - 1;
+}
+
+const OnnxForce::Input& OnnxForce::getInput(int index) const {
+    ASSERT_VALID_INDEX(index, inputs);
+    return *inputs[index];
+}
+
+OnnxForce::Input& OnnxForce::getInput(int index) {
+    ASSERT_VALID_INDEX(index, inputs);
+    return *inputs[index];
 }
 
 void OnnxForce::setProperty(const string& name, const string& value) {

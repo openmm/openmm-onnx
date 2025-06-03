@@ -46,6 +46,10 @@ namespace OnnxPlugin {
 
 class OPENMM_EXPORT_ONNX OnnxForce : public OpenMM::Force {
 public:
+    class Input;
+    class IntegerInput;
+    class FloatInput;
+    class BoolInput;
     /**
      * This is an enumeration of ONNX execution providers.
      */
@@ -89,6 +93,7 @@ public:
      * @param properties optional map of properties
      */
     OnnxForce(const std::vector<uint8_t>& model, const std::map<std::string, std::string>& properties={});
+    ~OnnxForce();
     /**
      * Get the binary representation of the model in ONNX format.
      */
@@ -162,6 +167,32 @@ public:
      */
     void setGlobalParameterDefaultValue(int index, double defaultValue);
     /**
+     * Get the number of extra tensors to pass to the model.
+     */
+    int getNumInputs() const;
+    /**
+     * Add an extra tensor that should be passed to the model.  The Input object should have
+     * been created on the heap with the "new" operator.  The OnnxForce takes over ownership
+     * of it, and deletes it when the OnnxForce itself is deleted.
+     *
+     * @param input       the tensor to pass in.  This should be the appropriate subclass for
+     *                    the type of value.
+     * @return the index of the input that was added
+     */
+    int addInput(Input* input);
+    /**
+     * Get a const reference to an extra input that is passed to the model.
+     *
+     * @param index     the index of the input to return
+     */
+    const Input& getInput(int index) const;
+    /**
+     * Get a writable reference to an extra input that is passed to the model.
+     *
+     * @param index     the index of the input to return
+     */
+    Input& getInput(int index);
+    /**
      * Set the value of a property.
      *
      * @param name           the name of the property
@@ -183,7 +214,116 @@ private:
     ExecutionProvider provider;
     bool periodic;
     std::vector<GlobalParameterInfo> globalParameters;
+    std::vector<Input*> inputs;
     std::map<std::string, std::string> properties;
+};
+
+/**
+ * An Input defines a tensor that should be passed to the model.  This is an abstract class.  Subclasses
+ * define particular types of tensors.
+ */
+class OnnxForce::Input {
+public:
+    virtual ~Input() {
+    }
+    /**
+     * Get the name of the input.
+     */
+    const std::string& getName() const {
+        return name;
+    }
+    /**
+     * Get the shape of the tensor.
+     */
+    const std::vector<int>& getShape() const {
+        return shape;
+    }
+    /**
+     * Set the shape of the tensor.
+     */
+    void setShape(const std::vector<int>& shape) {
+        this->shape = shape;
+    }
+protected:
+    Input() {
+    }
+    Input(const std::string& name, const std::vector<int>& shape) : name(name), shape(shape) {
+    }
+private:
+    std::string name;
+    std::vector<int> shape;
+};
+
+/**
+ * A tensor containing integer values that should be passed to the model.
+ */
+class OnnxForce::IntegerInput : public Input {
+public:
+    /**
+     * Create an IntegerInput.
+     *
+     * @param name      the name of the input
+     * @param values    the values contained by the tensor, in flattened order
+     * @param shape     the shape of the tensor
+     */
+    IntegerInput(const std::string& name, const std::vector<int>& values, const std::vector<int>& shape) : Input(name, shape), values(values) {
+    }
+    /**
+     * Get a const reference to the values contained in the tensor, in flattened order.
+     */
+    const std::vector<int>& getValues() const {
+        return values;
+    }
+    /**
+     * Get a writable reference to the values contained in the tensor, in flattened order.
+     */
+    std::vector<int>& getValues() {
+        return values;
+    }
+    /**
+     * Set the values contained in the tensor, in flattened order.
+     */
+    void setValues(const std::vector<int>& values) {
+        this->values = values;
+    }
+private:
+    std::vector<int> values;
+};
+
+/**
+ * A tensor containing float values that should be passed to the model.
+ */
+class OnnxForce::FloatInput : public Input {
+public:
+    /**
+     * Create an FloatInput.
+     *
+     * @param name      the name of the input
+     * @param values    the values contained by the tensor, in flattened order
+     * @param shape     the shape of the tensor
+     */
+    FloatInput(const std::string& name, const std::vector<float>& values, const std::vector<int>& shape) : Input(name, shape), values(values) {
+    }
+    /**
+     * Get a const reference to the values contained in the tensor, in flattened order.
+     */
+    const std::vector<float>& getValues() const {
+        return values;
+    }
+    /**
+     * Get a writable reference to the values contained in the tensor, in flattened order.
+     */
+    std::vector<float>& getValues() {
+        return values;
+    }
+    /**
+     * Set the values contained in the tensor, in flattened order.
+     */
+    void setValues(const std::vector<float>& values) {
+        this->values = values;
+    }
+private:
+    std::vector<float> values;
 };
 
 /**
