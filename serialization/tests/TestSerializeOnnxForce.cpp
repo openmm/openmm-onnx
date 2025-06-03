@@ -50,6 +50,8 @@ void testSerialization() {
     force.setUsesPeriodicBoundaryConditions(true);
     force.setProperty("UseGraphs", "true");
     force.setParticleIndices({0, 2, 4});
+    force.addInput(new OnnxForce::IntegerInput("ints", {0, 1, 2, 3, 4, 5}, {2, 3}));
+    force.addInput(new OnnxForce::FloatInput("floats", {2.0, 4.5, 5.3}, {1, 3}));
 
     // Serialize and then deserialize it.
 
@@ -63,6 +65,13 @@ void testSerialization() {
     ASSERT_EQUAL_CONTAINERS(force.getModel(), force2.getModel());
     ASSERT_EQUAL(force.getForceGroup(), force2.getForceGroup());
     ASSERT_EQUAL_CONTAINERS(force.getParticleIndices(), force2.getParticleIndices());
+    ASSERT_EQUAL(force.getNumInputs(), force2.getNumInputs());
+    for (int i = 0; i < force.getNumInputs(); i++) {
+        ASSERT_EQUAL(force.getInput(i).getName(), force2.getInput(i).getName());
+        ASSERT_EQUAL_CONTAINERS(force.getInput(i).getShape(), force2.getInput(i).getShape());
+    }
+    ASSERT_EQUAL_CONTAINERS(dynamic_cast<OnnxForce::IntegerInput&>(force.getInput(0)).getValues(), dynamic_cast<OnnxForce::IntegerInput&>(force2.getInput(0)).getValues());
+    ASSERT_EQUAL_CONTAINERS(dynamic_cast<OnnxForce::FloatInput&>(force.getInput(1)).getValues(), dynamic_cast<OnnxForce::FloatInput&>(force2.getInput(1)).getValues());
     ASSERT_EQUAL(force.getNumGlobalParameters(), force2.getNumGlobalParameters());
     for (int i = 0; i < force.getNumGlobalParameters(); i++) {
         ASSERT_EQUAL(force.getGlobalParameterName(i), force2.getGlobalParameterName(i));
