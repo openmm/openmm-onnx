@@ -48,7 +48,7 @@
     }
     PyObject* item = NULL;
     while ((item = PyIter_Next(iterator))) {
-        int v = PyLong_AsInt(item);
+        int v = (int) PyLong_AsLong(item);
         Py_DECREF(item);
         if (PyErr_Occurred() != NULL) {
             Py_DECREF(iterator);
