@@ -159,6 +159,54 @@ on the `Context`.
 context.setParameter("k", 5.0)
 ```
 
+## Extra Inputs
+
+You also can specify extra inputs that should be passed to the model.  Unlike global parameters,
+which are always scalars, extra inputs can be tensors of any size and shape.  On the other hand,
+their values are fixed at Context creation time, and can only be changed by reinitializing the
+Context.
+
+This example is similar to the one above, but `k` is now a vector containing a different force
+constant for every particle.
+
+```python
+class ForceWithInput(torch.nn.Module):
+    def forward(self, positions, k):
+        positions.grad = None
+        r2 = torch.sum(positions*positions, dim=1)
+        energy = torch.sum(k*r2)
+        energy.backward()
+        forces = -positions.grad
+        return energy, forces
+
+torch.onnx.export(model=ForceWithInput(),
+                  args=(torch.ones(1, 3, requires_grad=True), torch.ones(1)),
+                  f="ForceWithInput.onnx",
+                  input_names=["positions", "k"],
+                  output_names=["energy", "forces"],
+                  dynamic_axes={"positions":[0], "forces":[0], "k":[0]})
+```
+
+Notice that we included `k[0]` in `dynamic_axes` when exporting the model.  This allows its length
+to be variable, so we can use the model for systems with any number of particles.
+
+Here is how we create the OnnxForce.
+
+```python
+import openmmonnx
+force = OnnxForce("ForceWithInput.onnx")
+force.addInput(openmmonnx.FloatInput("k", k, [len(k)]))
+```
+
+The three arguments to the FloatInput constructor are the name of the input (matching the name we
+specified in `input_names` when exporting the model), a list or array containing the values, and
+the shape of the tensor.  In this case the tensor has one dimension, so the shape argument contains
+only a single value.  Higher dimensional tensors are also allowed.  In that case, the second
+argument should contain the values in flattened order.
+
+In addition to FloatInput, which specifies a tensor of 32 bit floating point values, there is also
+an IntegerInput class, which specifies a tensor of 32 bit integer values.
+
 ## Execution Providers
 
 ONNX Runtime supports a variety of backends that can be used to compute the neural network.  They
