@@ -49,7 +49,6 @@ public:
     class Input;
     class IntegerInput;
     class FloatInput;
-    class BoolInput;
     /**
      * This is an enumeration of ONNX execution providers.
      */
