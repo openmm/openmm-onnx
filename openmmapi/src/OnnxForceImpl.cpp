@@ -32,6 +32,7 @@
 #include "internal/OnnxForceImpl.h"
 #include "openmm/OpenMMException.h"
 #include "openmm/internal/ContextImpl.h"
+#include <sstream>
 
 using namespace OnnxPlugin;
 using namespace OpenMM;
@@ -124,6 +125,46 @@ void OnnxForceImpl::initialize(ContextImpl& context) {
     for (int i = 0; i < paramVec.size(); i++) {
         inputTensors.emplace_back(Value::CreateTensor<float>(memoryInfo, &paramVec[i], 1, paramShape, 1));
         inputNames.push_back(owner.getGlobalParameterName(i).c_str());
+    }
+
+    // Process extra inputs.
+
+    for (int i = 0; i < owner.getNumInputs(); i++) {
+        const OnnxForce::IntegerInput* integerInput = dynamic_cast<const OnnxForce::IntegerInput*>(&owner.getInput(i));
+        if (integerInput != nullptr) {
+            validateInput(integerInput->getName(), integerInput->getShape(), integerInput->getValues().size());
+            integerInputs.push_back(OnnxForce::IntegerInput(integerInput->getName(), integerInput->getValues(), integerInput->getShape()));
+        }
+        const OnnxForce::FloatInput* floatInput = dynamic_cast<const OnnxForce::FloatInput*>(&owner.getInput(i));
+        if (floatInput != nullptr) {
+            validateInput(floatInput->getName(), floatInput->getShape(), floatInput->getValues().size());
+            floatInputs.push_back(OnnxForce::FloatInput(floatInput->getName(), floatInput->getValues(), floatInput->getShape()));
+        }
+    }
+    for (OnnxForce::IntegerInput& input : integerInputs) {
+        vector<int64_t> shape;
+        for (int i : input.getShape())
+            shape.push_back(i);
+        inputTensors.emplace_back(Value::CreateTensor<int>(memoryInfo, input.getValues().data(), input.getValues().size(), shape.data(), shape.size()));
+        inputNames.push_back(input.getName().c_str());
+    }
+    for (OnnxForce::FloatInput& input : floatInputs) {
+        vector<int64_t> shape;
+        for (int i : input.getShape())
+            shape.push_back(i);
+        inputTensors.emplace_back(Value::CreateTensor<float>(memoryInfo, input.getValues().data(), input.getValues().size(), shape.data(), shape.size()));
+        inputNames.push_back(input.getName().c_str());
+    }
+}
+
+void OnnxForceImpl::validateInput(const string& name, const vector<int>& shape, int size) {
+    int expected = 1;
+    for (int i : shape)
+        expected *= i;
+    if (expected != size) {
+        stringstream message;
+        message<<"Incorrect length for input '"<<name<<"'.  Expected "<<expected<<" elements, found "<<size<<".";
+        throw OpenMMException(message.str());
     }
 }
 

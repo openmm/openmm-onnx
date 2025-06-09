@@ -56,12 +56,15 @@ public:
     double computeForce(OpenMM::ContextImpl& context, const std::vector<OpenMM::Vec3>& positions, std::vector<OpenMM::Vec3>& forces);
 private:
     const OnnxForce& owner;
+    void validateInput(const std::string& name, const std::vector<int>& shape, int size);
     Ort::Env env;
     Ort::Session session;
     std::vector<Ort::Value> inputTensors, outputTensors;
     std::vector<const char*> inputNames;
     std::vector<int> particleIndices;
     std::vector<float> positionVec, paramVec;
+    std::vector<OnnxForce::IntegerInput> integerInputs;
+    std::vector<OnnxForce::FloatInput> floatInputs;
     float boxVectors[9];
 };
 

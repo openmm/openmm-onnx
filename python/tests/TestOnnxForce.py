@@ -56,6 +56,44 @@ def testForce(use_cv_force, platform, particles):
         forces = forces[particles]
     assert np.allclose(-2*positions, forces)
 
+@pytest.mark.parametrize('platform', [mm.Platform.getPlatform(i).getName() for i in range(mm.Platform.getNumPlatforms())])
+def testInputs(platform):
+
+    # Create a random cloud of particles.
+    numParticles = 10
+    system = mm.System()
+    positions = np.random.rand(numParticles, 3)
+    for _ in range(numParticles):
+        system.addParticle(1.0)
+
+    # Create a force
+    force = openmmonnx.OnnxForce('../../tests/inputs.onnx')
+    system.addForce(force)
+    scale = np.random.randint(5, size=numParticles)
+    offset = np.random.rand(numParticles)
+    force.addInput(openmmonnx.IntegerInput('scale', scale, [numParticles]))
+    force.addInput(openmmonnx.FloatInput('offset', offset, [numParticles]))
+
+    # Compute the forces and energy.
+    integ = mm.VerletIntegrator(1.0)
+    try:
+        context = mm.Context(system, integ, mm.Platform.getPlatformByName(platform))
+    except:
+        pytest.skip(f'Unable to create Context with {platform}')
+    context.setPositions(positions)
+    state = context.getState(getEnergy=True, getForces=True)
+
+    # See if the energy and forces are correct.  The network defines a potential of the form E(r) = scale*(|r|^2-offset).
+    r2 = np.sum(positions*positions, axis=1)
+    expectedEnergy = np.sum(scale*(r2-offset))
+    assert np.allclose(expectedEnergy, state.getPotentialEnergy().value_in_unit(unit.kilojoules_per_mole))
+    forces = state.getForces(asNumpy=True)
+    assert np.allclose(-2*np.expand_dims(scale, 1)*positions, forces)
+
+    # Check that the Python wrappers return the input values correctly.
+    assert np.array_equal(scale, force.getInput(0).getValues())
+    assert np.allclose(offset, force.getInput(1).getValues())
+
 def testProperties():
     """ Test that the properties are correctly set and retrieved """
     force = openmmonnx.OnnxForce('../../tests/central.onnx')

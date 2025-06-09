@@ -74,6 +74,29 @@ void OnnxForceProxy::serialize(const void* object, SerializationNode& node) cons
     auto& indicesNode = node.createChildNode("ParticleIndices");
     for (int i = 0; i < indices.size(); i++)
         indicesNode.createChildNode("Particle").setIntProperty("index", indices[i]);
+    SerializationNode& inputs = node.createChildNode("Inputs");
+    for (int i = 0; i < force.getNumInputs(); i++) {
+        const OnnxForce::IntegerInput* integerInput = dynamic_cast<const OnnxForce::IntegerInput*>(&force.getInput(i));
+        if (integerInput != nullptr) {
+            SerializationNode& input = inputs.createChildNode("IntegerInput").setStringProperty("name", integerInput->getName());
+            SerializationNode& shape = input.createChildNode("Shape");
+            for (int j : integerInput->getShape())
+                shape.createChildNode("Dim").setIntProperty("d", j);
+            SerializationNode& values = input.createChildNode("Values");
+            for (int v : integerInput->getValues())
+                values.createChildNode("Value").setIntProperty("v", v);
+        }
+        const OnnxForce::FloatInput* floatInput = dynamic_cast<const OnnxForce::FloatInput*>(&force.getInput(i));
+        if (floatInput != nullptr) {
+            SerializationNode& input = inputs.createChildNode("FloatInput").setStringProperty("name", floatInput->getName());
+            SerializationNode& shape = input.createChildNode("Shape");
+            for (int j : floatInput->getShape())
+                shape.createChildNode("Dim").setIntProperty("d", j);
+            SerializationNode& values = input.createChildNode("Values");
+            for (float v : floatInput->getValues())
+                values.createChildNode("Value").setDoubleProperty("v", v);
+        }
+    }
     SerializationNode& globalParams = node.createChildNode("GlobalParameters");
     for (int i = 0; i < force.getNumGlobalParameters(); i++)
         globalParams.createChildNode("Parameter").setStringProperty("name", force.getGlobalParameterName(i)).setDoubleProperty("default", force.getGlobalParameterDefaultValue(i));
@@ -96,6 +119,26 @@ void* OnnxForceProxy::deserialize(const SerializationNode& node) const {
                 indices.push_back(particle.getIntProperty("index"));
             force->setParticleIndices(indices);
         }
+        if (child.getName() == "Inputs")
+            for (auto& input : child.getChildren()) {
+                vector<int> shape;
+                const SerializationNode& shapeNode = input.getChildNode("Shape");
+                for (auto& dim : shapeNode.getChildren())
+                    shape.push_back(dim.getIntProperty("d"));
+                const SerializationNode& valuesNode = input.getChildNode("Values");
+                if (input.getName() == "IntegerInput") {
+                    vector<int> values;
+                    for (auto& val : valuesNode.getChildren())
+                        values.push_back(val.getIntProperty("v"));
+                    force->addInput(new OnnxForce::IntegerInput(input.getStringProperty("name"), values, shape));
+                }
+                if (input.getName() == "FloatInput") {
+                    vector<float> values;
+                    for (auto& val : valuesNode.getChildren())
+                        values.push_back((float) val.getDoubleProperty("v"));
+                    force->addInput(new OnnxForce::FloatInput(input.getStringProperty("name"), values, shape));
+                }
+            }
         if (child.getName() == "GlobalParameters")
             for (auto& parameter : child.getChildren())
                 force->addGlobalParameter(parameter.getStringProperty("name"), parameter.getDoubleProperty("default"));
